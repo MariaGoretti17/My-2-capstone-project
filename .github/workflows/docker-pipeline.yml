@@ -1,3 +1,13 @@
+name: Docker CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - docker-github-actions
+  pull_request:
+    branches:
+      - docker-github-actions
+
 jobs:
   build-push-image:
     timeout-minutes: 10
