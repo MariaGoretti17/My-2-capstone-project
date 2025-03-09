@@ -1,0 +1,10 @@
+{
+  "name": "capstone-2",
+  "version": "1.0.0",
+  "description": "Capstone project for Dockerizing and pushing images to ECR",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {}
+}
