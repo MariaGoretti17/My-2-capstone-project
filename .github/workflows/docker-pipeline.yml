@@ -3,10 +3,9 @@ name: Docker CI/CD Pipeline
 on:
   push:
     branches:
-      - docker-github-actions
-  pull_request:
-    branches:
-      - docker-github-actions
+      - dev
+      - staging
+      - main 
 
 jobs:
   build-push-image:
