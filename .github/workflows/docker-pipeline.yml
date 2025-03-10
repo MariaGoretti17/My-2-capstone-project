@@ -12,11 +12,6 @@ jobs:
   build-push-image:
     timeout-minutes: 10
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        environment: [Dev, staging, main]  # Defines the environments (Dev, staging, and main)
-
     
     steps:
       - name: Checkout code
@@ -42,7 +37,7 @@ jobs:
         env:
           REGISTRY: 116981805219.dkr.ecr.us-east-1.amazonaws.com
           REPOSITORY: capstone-2
-          IMAGE_TAG: ${{ env.COMMIT_SHORT_SHA }}
+          IMAGE_TAG: ${{ env.COMMIT_SHORT_SHA }}  # Using environment variable set earlier
         run: |
           # Build Docker image
           docker build -t github-actions-repo .
