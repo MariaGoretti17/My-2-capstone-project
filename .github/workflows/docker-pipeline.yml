@@ -1,28 +1,35 @@
-name: Docker CI/CD Pipeline
+name: Docker Build and Deploy to Amazon ECR
 
 on:
-  pull_request:
-    branches:
-      - main  # Trigger on PRs to this branch
-      - staging  # Trigger on PRs to this branch
   push:
     branches:
-      - dev   # Trigger on push to this branch
+      - Dev
+      - Stage
+      - Main
+  pull_request:
+    branches:
+      - Dev
+      - Stage
+      - Main
 
 jobs:
-  build-push-image:
+  build-and-push:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-
     strategy:
       matrix:
-        environment: [dev, staging, main]  # Defines the 3 environments
-
+        environment: [dev, stage, prod]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v2
 
-      # Configure AWS credentials for the environment dynamically
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+        with:
+          region: ${{ secrets.AWS_REGION }}
+
       - name: Configure AWS credentials for ${{ matrix.environment }}
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -30,34 +37,27 @@ jobs:
           aws-access-key-id: ${{ secrets['AWS_ACCESS_KEY_ID_' + matrix.environment | upper] }}
           aws-secret-access-key: ${{ secrets['AWS_SECRET_ACCESS_KEY_' + matrix.environment | upper] }}
 
-      # Log in to Amazon ECR
-      - name: Login to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v2
-
-      # Set short git commit SHA for unique image versioning
-      - name: Set short git commit SHA
-        id: short-sha
+      - name: Set up Docker Buildx builder
         run: |
-          shortSha=$(git rev-parse --short ${{ github.sha }})
-          echo "COMMIT_SHORT_SHA=$shortSha" >> $GITHUB_ENV
+          docker buildx create --use
 
-      # Build, tag, and push Docker image to Amazon ECR for the respective environment
-      - name: Build, tag, and push Docker image to Amazon ECR for ${{ matrix.environment }} environment
-        env:
-          REGISTRY: 116981805219.dkr.ecr.us-east-1.amazonaws.com
-          REPOSITORY: my-capstone-ecr2
-          IMAGE_TAG: ${{ env.COMMIT_SHORT_SHA }}-${{ matrix.environment }} # Tag with environment-specific tag
+      - name: Build and tag Docker image for ${{ matrix.environment }}
         run: |
-          # Build Docker image
-          docker build -t github-actions-repo .
+          docker buildx build --file Dockerfile --tag ${{ secrets.ECR_REPOSITORY_URI }}:${{ matrix.environment }} --push .
 
-          # Tag Docker image with commit SHA and environment tag
-          docker tag github-actions-repo:latest $REGISTRY/$REPOSITORY:$IMAGE_TAG
-          
-          # Conditionally tag with 'latest' for the main branch only
-          if [[ "${{ matrix.environment }}" == "main" ]]; then
-            docker tag github-actions-repo:latest $REGISTRY/$REPOSITORY:latest
-          fi
+      - name: Push image to ECR for ${{ matrix.environment }}
+        run: |
+          docker push ${{ secrets.ECR_REPOSITORY_URI }}:${{ matrix.environment }}
 
-          # Push the image to ECR with all tags
-          docker push --all-tags $REGISTRY/$REPOSITORY
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    strategy:
+      matrix:
+        environment: [dev, stage, prod]
+    steps:
+      - name: Deploy to ${{ matrix.environment }}
+        run: |
+          echo "Deploying to ${{ matrix.environment }}"
+          # Here, you can add your deployment scripts, like ECS, EKS, or any service you use.
+
