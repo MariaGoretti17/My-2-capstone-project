@@ -4,10 +4,13 @@ on:
   push:
     branches:
       - Dev
+      - staging
+      - main
   pull_request:
     branches:
        - staging
        - main
+
 jobs:
   build-push-image:
     timeout-minutes: 10
@@ -37,12 +40,15 @@ jobs:
       - name: Determine Environment and Image Tag
         id: set-env
         run: |
+          echo "Current Branch: ${{ github.ref }}"
           if [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
             echo "DEPLOYMENT_ENV=staging" >> $GITHUB_ENV
           elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             echo "DEPLOYMENT_ENV=production" >> $GITHUB_ENV
-          else
+          elif [[ "${{ github.ref }}" == "refs/heads/Dev" ]]; then
             echo "DEPLOYMENT_ENV=dev" >> $GITHUB_ENV
+          else
+            echo "DEPLOYMENT_ENV=unknown" >> $GITHUB_ENV
           fi
           
       - name: Build, tag, and push docker image to Amazon ECR
@@ -51,6 +57,7 @@ jobs:
           REPOSITORY: capstone-2
           IMAGE_TAG: ${{ env.COMMIT_SHORT_SHA }}-${{ env.DEPLOYMENT_ENV }}  # Dynamic tagging
         run: |
+          echo "Building and tagging image with tag: $IMAGE_TAG"
           docker build -t github-actions-repo .
           docker tag github-actions-repo:latest $REGISTRY/$REPOSITORY:$IMAGE_TAG
           docker tag github-actions-repo:latest $REGISTRY/$REPOSITORY:latest
