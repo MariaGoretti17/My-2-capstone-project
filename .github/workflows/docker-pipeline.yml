@@ -12,6 +12,11 @@ jobs:
   build-push-image:
     timeout-minutes: 10
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        environment: [Dev, staging, main]  # Defines the environments (Dev, staging, and main)
+
     
     steps:
       - name: Checkout code
@@ -37,14 +42,20 @@ jobs:
         env:
           REGISTRY: 116981805219.dkr.ecr.us-east-1.amazonaws.com
           REPOSITORY: capstone-2
-          IMAGE_TAG: ${{ env.COMMIT_SHORT_SHA }}  # Using environment variable set earlier
+          IMAGE_TAG: ${{ env.COMMIT_SHORT_SHA }}-${{ matrix.environment }}
+
         run: |
           # Build Docker image
           docker build -t github-actions-repo .
           
-          # Tag Docker image with commit SHA and latest tag
+          # Tag Docker image with commit SHA and environment-specific tag
           docker tag github-actions-repo:latest $REGISTRY/$REPOSITORY:$IMAGE_TAG
-          docker tag github-actions-repo:latest $REGISTRY/$REPOSITORY:latest
           
+          # Conditionally tag with 'latest' for the main branch only
+          if [[ "${{ matrix.environment }}" == "main" ]]; then
+            docker tag github-actions-repo:latest $REGISTRY/$REPOSITORY:latest
+          fi
+
           # Push the image to ECR with both tags
           docker push --all-tags $REGISTRY/$REPOSITORY
+       
