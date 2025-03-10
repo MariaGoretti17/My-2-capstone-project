@@ -3,11 +3,11 @@ name: Docker CI/CD Pipeline
 on:
   push:
     branches:
-      - dev
+      - Dev
   pull_request:
     branches:
-       - Stage
-       - Main
+       - staging
+       - main
 jobs:
   build-push-image:
     timeout-minutes: 10
