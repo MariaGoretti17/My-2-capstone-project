@@ -33,11 +33,23 @@ jobs:
         run: |
           shortSha=$(git rev-parse --short ${{ github.sha }})
           echo "COMMIT_SHORT_SHA=$shortSha" >> $GITHUB_ENV  # Using run for shell command
+
+      - name: Determine Environment and Image Tag
+        id: set-env
+        run: |
+            if [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
+              echo "DEPLOYMENT_ENV=staging" >> $GITHUB_ENV
+            elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+              echo "DEPLOYMENT_ENV=production" >> $GITHUB_ENV
+            else
+              echo "DEPLOYMENT_ENV=dev" >> $GITHUB_ENV
+            fi    
+
       - name: Build, tag, and push docker image to Amazon ECR
         env:
           REGISTRY: 116981805219.dkr.ecr.us-east-1.amazonaws.com
           REPOSITORY: capstone-2
-          IMAGE_TAG: ${{ env.COMMIT_SHORT_SHA }}  # Using environment variable set earlier
+          IMAGE_TAG: ${{ env.COMMIT_SHORT_SHA }}-${{ env.DEPLOYMENT_ENV }}  # Dynamic tagging
         run: |
           # Build Docker image
           docker build -t github-actions-repo .
