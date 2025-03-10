@@ -12,6 +12,10 @@ jobs:
     timeout-minutes: 10
     runs-on: ubuntu-latest
     
+    strategy:
+      matrix:
+        environment: [dev, staging, main]  # Defines the 3 environments
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4  # Correctly using an action
@@ -20,8 +24,8 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4  # Correctly using an action
         with:
           aws-region: ${{ secrets.AWS_REGION }}
-          aws-access-key-id: ${{ secrets['AWS_ACCESS_KEY_ID_' + matrix.environment | upper] }}
-          aws-secret-access-key: ${{ secrets['AWS_SECRET_ACCESS_KEY_' + matrix.environment | upper] }}
+          aws-access-key-id: ${{ secrets['AWS_ACCESS_KEY_ID_' }}
+          aws-secret-access-key: ${{ secrets['AWS_SECRET_ACCESS_KEY_' }}
 
       - name: Login to Amazon ECR
         id: login-to-ecr
