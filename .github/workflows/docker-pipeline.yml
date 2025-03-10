@@ -34,8 +34,8 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ secrets.AWS_REGION }}
-          aws-access-key-id: ${{ secrets['AWS_ACCESS_KEY_ID_' + matrix.environment | upper] }}
-          aws-secret-access-key: ${{ secrets['AWS_SECRET_ACCESS_KEY_' + matrix.environment | upper] }}
+          aws-access-key-id: ${{ secrets['AWS_ACCESS_KEY_ID_' + (matrix.environment | upper)] }}
+          aws-secret-access-key: ${{ secrets['AWS_SECRET_ACCESS_KEY_' + (matrix.environment | upper)] }}
 
       - name: Set up Docker Buildx builder
         run: |
@@ -60,4 +60,3 @@ jobs:
         run: |
           echo "Deploying to ${{ matrix.environment }}"
           # Here, you can add your deployment scripts, like ECS, EKS, or any service you use.
-
