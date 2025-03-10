@@ -47,15 +47,27 @@ jobs:
         run: |
           # Build Docker image
           docker build -t github-actions-repo .
-          
-          # Tag Docker image with commit SHA and environment-specific tag
-          docker tag github-actions-repo:latest $REGISTRY/$REPOSITORY:$IMAGE_TAG
-          
-          # Conditionally tag with 'latest' for the main branch only
-          if [[ "${{ matrix.environment }}" == "main" ]]; then
-            docker tag github-actions-repo:latest $REGISTRY/$REPOSITORY:latest
-          fi
 
-          # Push the image to ECR with both tags
-          docker push --all-tags $REGISTRY/$REPOSITORY
-       
+          # Tag Docker image with commit SHA
+          docker tag github-actions-repo:latest $REGISTRY/$REPOSITORY:$COMMIT_SHORT_SHA
+
+          # Only push for the specific environment (dev, staging, main)
+          if [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
+            IMAGE_TAG=$COMMIT_SHORT_SHA-dev
+            docker tag github-actions-repo:latest $REGISTRY/$REPOSITORY:$IMAGE_TAG
+            echo "Pushing image to ECR for DEV"
+            docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+          elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
+            IMAGE_TAG=$COMMIT_SHORT_SHA-staging
+            docker tag github-actions-repo:latest $REGISTRY/$REPOSITORY:$IMAGE_TAG
+            echo "Pushing image to ECR for STAGING"
+            docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            IMAGE_TAG=$COMMIT_SHORT_SHA-main
+            docker tag github-actions-repo:latest $REGISTRY/$REPOSITORY:$IMAGE_TAG
+            echo "Pushing image to ECR for MAIN"
+            docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+            docker tag github-actions-repo:latest $REGISTRY/$REPOSITORY:latest
+            echo "Pushing latest image to ECR for MAIN"
+            docker push $REGISTRY/$REPOSITORY:latest
+          fi
