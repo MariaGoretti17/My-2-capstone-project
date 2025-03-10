@@ -27,8 +27,8 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ secrets.AWS_REGION }}
-          aws-access-key-id: ${{ secrets['AWS_ACCESS_KEY_ID_' + matrix.environment | upper] }}
-          aws-secret-access-key: ${{ secrets['AWS_SECRET_ACCESS_KEY_' + matrix.environment | upper] }}
+          aws-access-key-id: ${{ secrets['AWS_ACCESS_KEY_ID_' + matrix.environment] }}
+          aws-secret-access-key: ${{ secrets['AWS_SECRET_ACCESS_KEY_' + matrix.environment] }}
 
       # Log in to Amazon ECR
       - name: Login to Amazon ECR
